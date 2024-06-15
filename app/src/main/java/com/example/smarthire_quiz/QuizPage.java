@@ -3,8 +3,10 @@ package com.example.smarthire_quiz;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
@@ -19,6 +21,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.List;
 
 public class QuizPage extends AppCompatActivity {
 
@@ -27,11 +47,15 @@ public class QuizPage extends AppCompatActivity {
     private TextView questionText;
     private RadioGroup optionsGroup;
     private Button nextButton;
-
     private int score = 0;
-
     private TextView timerText;
     private CountDownTimer countDownTimer;
+    private long timeLeftInMillis;
+    private SharedPreferences sharedPreferences;
+
+
+    private static final String SHARED_PREF_TIME_LEFT = "timeLeftInMillis";
+    private static final long COUNTDOWN_INTERVAL = 1000; // Interval for timer update (1 second)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +65,20 @@ public class QuizPage extends AppCompatActivity {
         questionText = findViewById(R.id.question_text);
         optionsGroup = findViewById(R.id.options_group);
         nextButton = findViewById(R.id.next_button);
-
         timerText = findViewById(R.id.timer_text);
 
-        loadQuestions();
-        showQuestion(currentQuestionIndex);
+        // Load or initialize SharedPreferences
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        startTimer();
+        // Restore time left from SharedPreferences
+        timeLeftInMillis = sharedPreferences.getLong(SHARED_PREF_TIME_LEFT, 600000); // Default to 10 minutes
+
+        // Load questions if savedInstanceState is null (first creation)
+        if (savedInstanceState == null) {
+            loadQuestions();
+            showQuestion(currentQuestionIndex);
+            startTimer();
+        }
 
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,14 +89,29 @@ public class QuizPage extends AppCompatActivity {
                     showQuestion(currentQuestionIndex);
                 } else {
                     endQuiz();
-                //    Intent intent = new Intent(QuizPage.this, ResultActivity.class);
-                //    intent.putExtra("SCORE", score);
-                //    intent.putExtra("TOTAL_QUESTIONS", questions.size());
-                //    startActivity(intent);
-                //    finish();
                 }
             }
         });
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Save the current time left to the outState bundle
+        outState.putLong(SHARED_PREF_TIME_LEFT, timeLeftInMillis);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // Restore the time left from the savedInstanceState
+        timeLeftInMillis = savedInstanceState.getLong(SHARED_PREF_TIME_LEFT);
+        updateCountdownText();
+        if (timeLeftInMillis <= 0) {
+            endQuiz();
+        } else {
+            startTimer();
+        }
     }
 
     private void loadQuestions() {
@@ -106,26 +152,48 @@ public class QuizPage extends AppCompatActivity {
     }
 
     private void startTimer() {
+        countDownTimer = new CountDownTimer(timeLeftInMillis, COUNTDOWN_INTERVAL) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timeLeftInMillis = millisUntilFinished;
+                updateCountdownText();
+            }
 
-            countDownTimer = new CountDownTimer(60000, 1000) { // 1 minute in milliseconds
-
-                public void onTick(long millisUntilFinished){
-                    long minutes = millisUntilFinished / 60000;
-                    long seconds = (millisUntilFinished % 60000) / 1000;
-                    String timeLeft = String.format("%02d:%02d", minutes, seconds);
-                    timerText.setText(timeLeft);
-                }
+            @Override
             public void onFinish() {
+                timeLeftInMillis = 0;
                 endQuiz();
             }
         }.start();
     }
 
+    private void updateCountdownText() {
+        long minutes = timeLeftInMillis / 60000;
+        long seconds = (timeLeftInMillis % 60000) / 1000;
+        String timeLeft = String.format("%02d:%02d", minutes, seconds);
+        timerText.setText(timeLeft);
+    }
+
     private void endQuiz() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
         Intent intent = new Intent(QuizPage.this, ResultActivity.class);
         intent.putExtra("SCORE", score);
         intent.putExtra("TOTAL_QUESTIONS", questions.size());
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Save the current time left to SharedPreferences when the activity is destroyed
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(SHARED_PREF_TIME_LEFT, timeLeftInMillis);
+        editor.apply();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
     }
 }
