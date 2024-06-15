@@ -1,0 +1,52 @@
+[
+  {
+    "question": "What sports car company manufactures the 911? ",
+    "options": ["Porsche", " Lotus Emira", "Alpine", " Jaguar"],
+    "answer": "Porsche"
+  },
+  {
+    "question": "Who discovered electricity?",
+    "options": ["Isaac Newton", "Nikola Tesla", "Michael Faraday", "Benjamin Franklin"],
+    "answer": "Benjamin Franklin"
+  },
+  {
+    "question": "What is the highest-grossing film of all time?",
+    "options": ["Titanic", "Avatar", "Avengers: Endgame ", "Star Wars: The Force Awakens"],
+    "answer": "Avengers: Endgame "
+  },
+  {
+    "question": "What type of animal is a penguin?",
+    "options": ["Mammal", "Reptile", "Insect", "Bird"],
+    "answer": "Bird"
+  },
+  {
+    "question": "What is the strongest muscle in the human body?",
+    "options": ["Biceps", "Quadriceps", "Heart", " Jaw Muscle"],
+    "answer": " Jaw Muscle"
+  },
+  {
+    "question": "Who painted Starry Night?",
+    "options": ["Pablo Picasso", "Vincent van Gogh", "Claude Monet", "Edvard Munch"],
+    "answer": "Vincent van Gogh"
+  },
+  {
+    "question": "What is the loudest animal on Earth?",
+    "options": ["Sperm Whale", "Elephant", "Lion", "Blue Whale"],
+    "answer": "Sperm Whale"
+  },
+  {
+    "question": "What is the world's largest desert?",
+    "options": ["Mojave", "Antarctic Desert", "Sahara", "Siberian Desert"],
+    "answer": "Antarctic Desert"
+  },
+  {
+    "question": "What is the primary gas found in the Earth's atmosphere?",
+    "options": ["Oxygen", "Argon", "Carbon Dioxide", "Nitrogen"],
+    "answer": "Nitrogen"
+  },
+  {
+    "question": "What is a group of crows called?",
+    "options": ["A pack", "A flock", "A murder", "A caw"],
+    "answer": "A murder"
+  }
+]
