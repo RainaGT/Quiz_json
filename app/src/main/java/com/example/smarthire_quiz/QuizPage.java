@@ -52,10 +52,13 @@ public class QuizPage extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private long timeLeftInMillis;
     private SharedPreferences sharedPreferences;
+    private TextView questionCounter;
 
 
     private static final String SHARED_PREF_TIME_LEFT = "timeLeftInMillis";
-    private static final long COUNTDOWN_INTERVAL = 1000; // Interval for timer update (1 second)
+    private static final String SHARED_PREF_CURRENT_INDEX = "currentQuestionIndex";
+    private static final String SHARED_PREF_SCORE = "score";
+    private static final long COUNTDOWN_INTERVAL = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,18 +69,36 @@ public class QuizPage extends AppCompatActivity {
         optionsGroup = findViewById(R.id.options_group);
         nextButton = findViewById(R.id.next_button);
         timerText = findViewById(R.id.timer_text);
+        questionCounter = findViewById(R.id.question_counter);
 
         // Load or initialize SharedPreferences
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        // Restore time left from SharedPreferences
-        timeLeftInMillis = sharedPreferences.getLong(SHARED_PREF_TIME_LEFT, 600000); // Default to 10 minutes
 
-        // Load questions if savedInstanceState is null (first creation)
         if (savedInstanceState == null) {
+            // Load quiz state from SharedPreferences if available
+            if (sharedPreferences.contains(SHARED_PREF_TIME_LEFT)) {
+                timeLeftInMillis = sharedPreferences.getLong(SHARED_PREF_TIME_LEFT, 600000); // Default to 10 minutes
+                currentQuestionIndex = sharedPreferences.getInt(SHARED_PREF_CURRENT_INDEX, 0);
+                score = sharedPreferences.getInt(SHARED_PREF_SCORE, 0);
+            } else {
+                // Initialize for a new quiz
+                timeLeftInMillis = 600000; // 10 minutes in milliseconds
+            }
             loadQuestions();
             showQuestion(currentQuestionIndex);
             startTimer();
+        } else {
+            // Restore state from savedInstanceState
+            timeLeftInMillis = savedInstanceState.getLong(SHARED_PREF_TIME_LEFT);
+            currentQuestionIndex = savedInstanceState.getInt(SHARED_PREF_CURRENT_INDEX);
+            score = savedInstanceState.getInt(SHARED_PREF_SCORE);
+            updateCountdownText();
+            if (timeLeftInMillis <= 0) {
+                endQuiz();
+            } else {
+                startTimer();
+            }
         }
 
         nextButton.setOnClickListener(new View.OnClickListener() {
@@ -99,6 +120,8 @@ public class QuizPage extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         // Save the current time left to the outState bundle
         outState.putLong(SHARED_PREF_TIME_LEFT, timeLeftInMillis);
+        outState.putInt(SHARED_PREF_CURRENT_INDEX, currentQuestionIndex);
+        outState.putInt(SHARED_PREF_SCORE, score);
     }
 
     @Override
@@ -130,6 +153,8 @@ public class QuizPage extends AppCompatActivity {
             radioButton.setText(option);
             optionsGroup.addView(radioButton);
         }
+        String questionCounterText = "Question " + (index + 1) + "/" + questions.size();
+        questionCounter.setText(questionCounterText);
     }
 
     private void checkAnswer() {
@@ -145,10 +170,10 @@ public class QuizPage extends AppCompatActivity {
 
         if (selectedAnswer.equals(correctAnswer)) {
             score++;
-            Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "Incorrect! The correct answer is: " + correctAnswer, Toast.LENGTH_LONG).show();
-        }
+           // Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+        } //else {
+           // Toast.makeText(this, "Incorrect! The correct answer is: " + correctAnswer, Toast.LENGTH_LONG).show();
+        //}
     }
 
     private void startTimer() {
@@ -188,10 +213,13 @@ public class QuizPage extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Save the current time left to SharedPreferences when the activity is destroyed
+        // Save the current quiz state to SharedPreferences
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putLong(SHARED_PREF_TIME_LEFT, timeLeftInMillis);
+        editor.putInt(SHARED_PREF_CURRENT_INDEX, currentQuestionIndex);
+        editor.putInt(SHARED_PREF_SCORE, score);
         editor.apply();
+
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
